@@ -50,7 +50,6 @@ export default {
             const autoVerifyEnabled = Boolean(guildConfig.verification?.autoVerify?.enabled);
             const autoRoleId = guildConfig.autoRole || welcomeConfig?.roleIds?.[0];
 
-            // ── Channels ──────────────────────────────────────────────────────
             const [auditChannel, lifecycleChannel, transcriptChannel, reportChannel, birthdayChannel] =
                 await Promise.all([
                     formatChannelMention(interaction.guild, loggingStatus.channelId || guildConfig.logging?.channelId || guildConfig.logChannelId),
@@ -65,7 +64,6 @@ export default {
                 .setDescription(`Read-only snapshot for **${interaction.guild.name}**. Use the relevant command's dashboard to make changes.`)
                 .setColor(getColor('primary'))
                 .addFields(
-                    // ── Core systems ──
                     {
                         name: '⚙️ Core Systems',
                         value: [
@@ -82,7 +80,6 @@ export default {
                         ].join('\n'),
                         inline: false,
                     },
-                    // ── Channels ──
                     {
                         name: '📡 Configured Channels',
                         value: [
@@ -94,7 +91,6 @@ export default {
                         ].join('\n'),
                         inline: false,
                     },
-                    // ── Refresh stamp ──
                     {
                         name: '🕒 Snapshot Taken',
                         value: `<t:${Math.floor(Date.now() / 1000)}:R>`,
@@ -112,4 +108,77 @@ export default {
             });
         }
     },
+
+    executePrefixCommand: async (message, args, client) => {
+        try {
+            const [guildConfig, loggingStatus, levelingConfig, welcomeConfig, applicationConfig, joinToCreateConfig] =
+                await Promise.all([
+                    getGuildConfig(client, message.guildId),
+                    getLoggingStatus(client, message.guildId),
+                    getLevelingConfig(client, message.guildId),
+                    getWelcomeConfig(client, message.guildId),
+                    getApplicationSettings(client, message.guildId),
+                    getJoinToCreateConfiguration(client, message.guildId),
+                ]);
+
+            const verificationEnabled = Boolean(guildConfig.verification?.enabled);
+            const autoVerifyEnabled = Boolean(guildConfig.verification?.autoVerify?.enabled);
+            const autoRoleId = guildConfig.autoRole || welcomeConfig?.roleIds?.[0];
+
+            const [auditChannel, lifecycleChannel, transcriptChannel, reportChannel, birthdayChannel] =
+                await Promise.all([
+                    formatChannelMention(message.guild, loggingStatus.channelId || guildConfig.logging?.channelId || guildConfig.logChannelId),
+                    formatChannelMention(message.guild, guildConfig.ticketLogsChannelId),
+                    formatChannelMention(message.guild, guildConfig.ticketTranscriptChannelId),
+                    formatChannelMention(message.guild, guildConfig.reportChannelId),
+                    formatChannelMention(message.guild, guildConfig.birthdayChannelId),
+                ]);
+
+            const embed = new EmbedBuilder()
+                .setTitle('🖥️ System Overview')
+                .setDescription(`Read-only snapshot for **${message.guild.name}**. Use the relevant command's dashboard to make changes.`)
+                .setColor(getColor('primary'))
+                .addFields(
+                    {
+                        name: '⚙️ Core Systems',
+                        value: [
+                            `🧾 **Audit Logging** — ${pill(Boolean(loggingStatus.enabled))}`,
+                            `📈 **Leveling** — ${pill(Boolean(levelingConfig?.enabled))}`,
+                            `👋 **Welcome** — ${pill(Boolean(welcomeConfig?.enabled))}`,
+                            `👋 **Goodbye** — ${pill(Boolean(welcomeConfig?.goodbyeEnabled))}`,
+                            `🎂 **Birthdays** — ${pill(Boolean(guildConfig.birthdayChannelId))}`,
+                            `📋 **Applications** — ${pill(Boolean(applicationConfig?.enabled))}`,
+                            `✅ **Verification** — ${pill(verificationEnabled)}`,
+                            `🤖 **Auto-Verify** — ${pill(autoVerifyEnabled)}`,
+                            `🎧 **Join to Create** — ${pill(Boolean(joinToCreateConfig?.enabled))}`,
+                            `🛡️ **Auto Role** — ${autoRoleId ? `✅ ${formatRoleMention(message.guild, autoRoleId)}` : '❌ Off'}`,
+                        ].join('\n'),
+                        inline: false,
+                    },
+                    {
+                        name: '📡 Configured Channels',
+                        value: [
+                            `**Audit Log:** ${auditChannel}`,
+                            `**Ticket Lifecycle:** ${lifecycleChannel}`,
+                            `**Ticket Transcripts:** ${transcriptChannel}`,
+                            `**Reports:** ${reportChannel}`,
+                            `**Birthdays:** ${birthdayChannel}`,
+                        ].join('\n'),
+                        inline: false,
+                    },
+                    {
+                        name: '🕒 Snapshot Taken',
+                        value: `<t:${Math.floor(Date.now() / 1000)}:R>`,
+                        inline: true,
+                    },
+                )
+                .setFooter({ text: 'Read-only' })
+                .setTimestamp();
+
+            await message.reply({ embeds: [embed] });
+        } catch (error) {
+            logger.error('overview prefix command error:', error);
+            await message.reply('❌ Could not load the system overview.').catch(() => {});
+        }
+    }
 };

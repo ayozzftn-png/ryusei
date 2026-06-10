@@ -1,7 +1,8 @@
 import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import { createEmbed } from '../../utils/embeds.js';
-
+import { logger } from '../../utils/logger.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
+
 export default {
     data: new SlashCommandBuilder()
         .setName("bug")
@@ -9,20 +10,20 @@ export default {
 
     async execute(interaction) {
         const githubButton = new ButtonBuilder()
-            .setLabel('?? Report Bug on GitHub')
+            .setLabel('🐛 Report Bug on GitHub')
             .setStyle(ButtonStyle.Link)
             .setURL('https://github.com/codebymitch/TitanBot/issues');
 
         const row = new ActionRowBuilder().addComponents(githubButton);
 
         const bugReportEmbed = createEmbed({
-            title: '?? Bug Report',
+            title: '🐛 Bug Report',
             description: 'Found a bug? Please report it on our GitHub Issues page!\n\n' +
             '**When reporting a bug, please include:**\n' +
-            '� ?? Detailed description of the issue\n' +
-            '� ?? Steps to reproduce the problem\n' +
-            '� ?? Screenshots if applicable\n' +
-            '� ?? Your bot version and environment\n\n' +
+            '• 📝 Detailed description of the issue\n' +
+            '• 📋 Steps to reproduce the problem\n' +
+            '• 📸 Screenshots if applicable\n' +
+            '• 💻 Your bot version and environment\n\n' +
             'This helps us fix issues faster and more effectively!',
             color: 'error'
         })
@@ -33,8 +34,36 @@ export default {
             components: [row],
         });
     },
+
+    executePrefixCommand: async (message, args, client) => {
+        try {
+            const githubButton = new ButtonBuilder()
+                .setLabel('🐛 Report Bug on GitHub')
+                .setStyle(ButtonStyle.Link)
+                .setURL('https://github.com/codebymitch/TitanBot/issues');
+
+            const row = new ActionRowBuilder().addComponents(githubButton);
+
+            const bugReportEmbed = createEmbed({
+                title: '🐛 Bug Report',
+                description: 'Found a bug? Please report it on our GitHub Issues page!\n\n' +
+                '**When reporting a bug, please include:**\n' +
+                '• 📝 Detailed description of the issue\n' +
+                '• 📋 Steps to reproduce the problem\n' +
+                '• 📸 Screenshots if applicable\n' +
+                '• 💻 Your bot version and environment\n\n' +
+                'This helps us fix issues faster and more effectively!',
+                color: 'error'
+            })
+                .setTimestamp();
+
+            await message.reply({
+                embeds: [bugReportEmbed],
+                components: [row],
+            });
+        } catch (error) {
+            logger.error('Bug prefix command error:', error);
+            await message.reply('❌ Could not display bug report.').catch(() => {});
+        }
+    }
 };
-
-
-
-

@@ -49,7 +49,6 @@ export default {
         }
     },
 
-    // Support for prefix commands
     executePrefixCommand: async (message, args, client) => {
         try {
             const latency = Date.now() - message.createdTimestamp;

@@ -1,4 +1,4 @@
-﻿import {
+import {
     SlashCommandBuilder,
     ActionRowBuilder,
     ButtonBuilder,
@@ -12,6 +12,7 @@ import {
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+import { logger } from '../../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,10 +40,6 @@ const CATEGORY_ICONS = {
     Birthday: "🎂",
     Config: "⚙️",
 };
-
-
-
-
 
 export async function createInitialHelpMenu(client) {
     const commandsPath = path.join(__dirname, "../../commands");
@@ -202,7 +199,6 @@ export default {
 
     async execute(interaction, guildConfig, client) {
         
-        const { MessageFlags } = await import('discord.js');
         await InteractionHelper.safeDefer(interaction);
         
         const { embeds, components } = await createInitialHelpMenu(client);
@@ -229,6 +225,35 @@ export default {
             }
         }, HELP_MENU_TIMEOUT_MS);
     },
+
+    executePrefixCommand: async (message, args, client) => {
+        try {
+            const { embeds, components } = await createInitialHelpMenu(client);
+
+            const msg = await message.reply({
+                embeds,
+                components,
+            });
+
+            setTimeout(async () => {
+                try {
+                    const closedEmbed = createEmbed({
+                        title: "Help menu closed",
+                        description: "Help menu has been closed.",
+                        color: "secondary",
+                    });
+
+                    await msg.edit({
+                        embeds: [closedEmbed],
+                        components: [],
+                    });
+                } catch (error) {
+                    logger.debug('Could not close help menu:', error);
+                }
+            }, HELP_MENU_TIMEOUT_MS);
+        } catch (error) {
+            logger.error('Help prefix command error:', error);
+            await message.reply('❌ Could not display help menu.').catch(() => {});
+        }
+    }
 };
-
-
