@@ -48,8 +48,22 @@ export default {
             }
         }
     },
+
+    // Support for prefix commands
+    executePrefixCommand: async (message, args, client) => {
+        try {
+            const latency = Date.now() - message.createdTimestamp;
+            const apiLatency = Math.round(client.ws.ping);
+
+            const embed = createEmbed({ title: "🏓 Pong!", description: null }).addFields(
+                { name: "Bot Latency", value: `${latency}ms`, inline: true },
+                { name: "API Latency", value: `${apiLatency}ms`, inline: true },
+            );
+
+            await message.reply({ embeds: [embed] });
+        } catch (error) {
+            logger.error('Ping prefix command error:', error);
+            await message.reply('❌ Could not determine latency.').catch(() => {});
+        }
+    }
 };
-
-
-
-
