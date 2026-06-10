@@ -49,7 +49,22 @@ export const botConfig = {
     // Optional server ID used for testing slash commands quickly.
     testGuildId: process.env.TEST_GUILD_ID,
   },
+  commands: {
+    owners: process.env.OWNER_IDS?.split(",") || [],
+    defaultCooldown: 3, 
+    deleteCommands: false,
+    testGuildId: process.env.TEST_GUILD_ID,
+  },
 
+  // ADD THIS NEW SECTION:
+  // =========================
+  // PREFIX SETTINGS
+  // =========================
+  prefix: "+", // ← Change this to your desired prefix (e.g., "$", ".", ">", "?", etc.)
+
+  // =========================
+  // APPLICATIONS SYSTEM
+  // =========================
   // =========================
   // APPLICATIONS SYSTEM
   // =========================
